@@ -1,0 +1,130 @@
+// --- Pines de control del Motor Derecho ---
+const int ENA = 9; 
+const int IN1 = 8;
+const int IN2 = 7;
+
+// --- Pines de control del Motor Izquierdo ---
+const int ENB = 3;
+const int IN3 = 5;
+const int IN4 = 4;
+
+// --- Pines de los botones de movimiento (Mando 1) ---
+const int botonAdelante = A0; 
+const int botonAtras = A1;
+const int botonIzquierda = A2;
+const int botonDerecha = A3;
+
+// --- Pines de los botones de función (Mando 2) ---
+// Se cambiaron los pines 3 y 4 a 10, 11 y 12 para evitar conflictos con los motores
+const int UP_BUTTON    = 10;
+const int LEFT_BUTTON  = 11;
+const int RIGHT_BUTTON = 12;
+
+// Variables para almacenar el estado anterior de cada botón de función
+int lastUpState    = HIGH;
+int lastLeftState  = HIGH;
+int lastRightState = HIGH;
+
+void setup() {
+  // Iniciar el Monitor Serie a 9600 baudios
+  Serial.begin(9600);
+  
+  // Configurar pines de motores como salida
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  
+  // Configurar pines de botones de movimiento como entrada con resistencia interna
+  pinMode(botonAdelante, INPUT_PULLUP);
+  pinMode(botonAtras, INPUT_PULLUP);
+  pinMode(botonIzquierda, INPUT_PULLUP);
+  pinMode(botonDerecha, INPUT_PULLUP);
+
+  // Configurar pines de botones de función como entrada con resistencia interna
+  pinMode(UP_BUTTON, INPUT_PULLUP);
+  pinMode(LEFT_BUTTON, INPUT_PULLUP);
+  pinMode(RIGHT_BUTTON, INPUT_PULLUP);
+}
+
+void loop() {
+  // --- PARTE 1: Control de Motores ---
+  // Leer estado de los botones de movimiento (LOW cuando se pulsa)
+  int adelante = digitalRead(botonAdelante);
+  int atras = digitalRead(botonAtras);
+  int izquierda = digitalRead(botonIzquierda);
+  int derecha = digitalRead(botonDerecha);
+
+  // Control de velocidad (0-255)
+  analogWrite(ENA, 200); 
+  analogWrite(ENB, 200);
+
+  if (adelante == LOW) {
+    avanzar();
+  } else if (atras == LOW) {
+    retroceder();
+  } else if (izquierda == LOW) {
+    girarIzquierda();
+  } else if (derecha == LOW) {
+    girarDerecha();
+  } else {
+    detener();
+  }
+
+  // --- PARTE 2: Monitoreo de Botones de Función (Monitor Serie) ---
+  // Leer el estado actual de cada botón
+  int currentUpState    = digitalRead(UP_BUTTON);
+  int currentLeftState  = digitalRead(LEFT_BUTTON);
+  int currentRightState = digitalRead(RIGHT_BUTTON);
+
+  // Verificar botón UP (LOW significa presionado)
+  if (currentUpState == LOW && lastUpState == HIGH) {
+    Serial.println("UP");
+    delay(50); // Retraso anti-rebote
+  }
+  
+  // Verificar botón LEFT
+  if (currentLeftState == LOW && lastLeftState == HIGH) {
+    Serial.println("LEFT");
+    delay(50); // Retraso anti-rebote
+  }
+  
+  // Verificar botón RIGHT
+  if (currentRightState == LOW && lastRightState == HIGH) {
+    Serial.println("RIGHT");
+    delay(50); // Retraso anti-rebote
+  }
+
+  // Guardar los estados actuales para el próximo ciclo
+  lastUpState    = currentUpState;
+  lastLeftState  = currentLeftState;
+  lastRightState = currentRightState;
+}
+
+// --- Funciones de movimiento ---
+void avanzar() {
+  digitalWrite(IN1, HIGH); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH); digitalWrite(IN4, LOW);
+}
+
+void retroceder() {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, HIGH);
+}
+
+void girarIzquierda() {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH); digitalWrite(IN4, LOW);
+}
+
+void girarDerecha() {
+  digitalWrite(IN1, HIGH); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, HIGH);
+}
+
+void detener() {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, LOW);
+}
